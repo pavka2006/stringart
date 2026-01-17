@@ -1,7 +1,7 @@
 #include <iostream>
 #include <filesystem>
-#include <chrono>
 #include <iomanip>
+#include <cstdio>
 #include "image.h"
 #include "models.h"
 #include "algorithms.h"
@@ -56,13 +56,10 @@ int main(int argc, char* argv[]) {
         std::cout << "Line Alpha (Stage 1): " << params1.lineAlpha << std::endl << std::endl;
 
         ReportProgress(1, 4, "Loading image...");
-
         ImageProcessor imgProc;
-
         Image targetMatrix = imgProc.LoadAndProcess(params1.inputImagePath, params1.imageResolution);
 
         ReportProgress(2, 4, "Generating nails...");
-
         Utils nailGen;
         auto nails = nailGen.GenerateNails(
             params1.nailCount,
@@ -73,15 +70,14 @@ int main(int argc, char* argv[]) {
 
         ReportProgress(3, 4, "Optimizing (Stage 1)...");
 
-        LineCache cache;
-        GreedyOptimizer optimizer(&cache);
-
+        LinePalette palette(nails.size(), params1.imageResolution, params1.imageResolution);
+        GreedyOptimizer optimizer(&palette);
         auto result1 = optimizer.Optimize(targetMatrix, nails, params1, ReportProgress);
 
         std::cout << "\n=== STAGE 1 RESULT ===" << std::endl;
         std::cout << "Lines: " << result1.lineSequence.size() << std::endl;
-        std::cout << "MSE: " << std::fixed << std::setprecision(4) << result1.metrics.mse << std::endl;
-        std::cout << "RMSE: " << result1.metrics.rmse << std::endl;
+        std::cout << "MSE: " << std::fixed << std::setprecision(4) << result1.metrics.getMse() << std::endl;
+        std::cout << "RMSE: " << result1.metrics.getRmse() << std::endl;
 
         std::cout << "\n========== STAGE 2: FINE TUNING ==========" << std::endl;
 
@@ -101,19 +97,17 @@ int main(int argc, char* argv[]) {
         std::cout << "Threshold: 0.005 (balanced)" << std::endl << std::endl;
 
         std::cout << "[050%] Optimizing (Stage 2)...\n";
-
         auto result2 = optimizer.Optimize(targetMatrix, nails, params2, ReportProgress);
 
         std::cout << "\n=== STAGE 2 RESULT ===" << std::endl;
         std::cout << "Lines: " << result2.lineSequence.size() << std::endl;
-        std::cout << "MSE: " << result2.metrics.mse << std::endl;
-        std::cout << "RMSE: " << result2.metrics.rmse << std::endl;
+        std::cout << "MSE: " << result2.metrics.getMse() << std::endl;
+        std::cout << "RMSE: " << result2.metrics.getRmse() << std::endl;
 
         std::cout << "\n========== EXPORTING ==========" << std::endl;
         std::cout << "[075%] Exporting...\n";
 
         Exporter exporter;
-
         if (params2.exportJson) {
             std::string jsonPath = params2.outputDirectory + "/result.json";
             exporter.ExportJson(result2, jsonPath);
@@ -129,12 +123,12 @@ int main(int argc, char* argv[]) {
         std::cout << "\n=== FINAL RESULT ===" << std::endl;
         std::cout << "Stage 1 Lines: " << result1.lineSequence.size() << std::endl;
         std::cout << "Stage 2 Lines: " << result2.lineSequence.size() << std::endl;
-        std::cout << "MSE: " << std::fixed << std::setprecision(4) << result2.metrics.mse << std::endl;
-        std::cout << "RMSE: " << result2.metrics.rmse << std::endl;
-        std::cout << "Coverage: " << std::setprecision(2) << result2.metrics.coveragePercent << "%" << std::endl;
-        std::cout << "Total Time: " << result2.metrics.processingTimeMs << "ms" << std::endl;
+        std::cout << "MSE: " << std::fixed << std::setprecision(4) << result2.metrics.getMse() << std::endl;
+        std::cout << "RMSE: " << result2.metrics.getRmse() << std::endl;
+        std::cout << "Coverage: " << std::setprecision(2) << result2.metrics.getCoveragePercent() << "%" << std::endl;
+        std::cout << "Total Time: " << result2.metrics.getProcessingTimeMs() << "ms" << std::endl;
 
-        std::cout << "\n Complete!" << std::endl;
+        std::cout << "\n✓ Complete!" << std::endl;
 
     } catch (const std::exception& ex) {
         std::cerr << "ERROR: " << ex.what() << std::endl;

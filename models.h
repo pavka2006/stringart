@@ -1,7 +1,6 @@
 #pragma once
-
-#include <vector>
 #include <string>
+#include <vector>
 #include "image.h"
 
 struct Nail {
@@ -22,12 +21,29 @@ struct LineConnection {
         : fromNailId(from), toNailId(to), position(pos) {}
 };
 
-struct QualityMetrics {
-    double mse = 0.0;
-    double rmse = 0.0;
-    double coveragePercent = 0.0;
-    int totalLines = 0;
-    long processingTimeMs = 0;
+class QualityMetrics {
+private:
+    double mse;
+    double rmse;
+    double coveragePercent;
+    int totalLines;
+    long processingTimeMs;
+
+public:
+    QualityMetrics()
+        : mse(0.0), rmse(0.0), coveragePercent(0.0), totalLines(0), processingTimeMs(0) {}
+
+    double getMse() const { return mse; }
+    double getRmse() const { return rmse; }
+    double getCoveragePercent() const { return coveragePercent; }
+    int getTotalLines() const { return totalLines; }
+    long getProcessingTimeMs() const { return processingTimeMs; }
+
+    void setMse(double value) { mse = value; }
+    void setRmse(double value) { rmse = value; }
+    void setCoveragePercent(double value) { coveragePercent = value; }
+    void setTotalLines(int value) { totalLines = value; }
+    void setProcessingTimeMs(long value) { processingTimeMs = value; }
 };
 
 struct GenerationParameters {
@@ -44,7 +60,7 @@ struct GenerationParameters {
 
 struct GenerationResult {
     std::vector<LineConnection> lineSequence;
-    Image renderedImage;  // From image.h
+    Image renderedImage;
     QualityMetrics metrics;
     std::vector<Nail> nails;
 };
